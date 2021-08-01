@@ -1,0 +1,86 @@
+.app {
+  text-align: center;
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  height: 30px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+  padding: 1px 0 4px 0;
+}
+
+.zone-nok {
+  background-color: red;
+}
+.zone-nok:after {
+  content: 'Vous êtes à plus de 1 Km 🚓'
+}
+.zone-ok {
+  background-color: green;
+}
+.zone-ok:after {
+  content: '😌'
+}
+
+.need-click {
+  background-color: red;
+}
+.need-click:after {
+  content: 'click the 🏠 to set your home location'
+}
+
+.map {
+  height: 100vh;
+}
+
+.install-footer {
+  position: fixed;
+  bottom: 0;
+  height: 30px;
+  width: 100%;
+  background-color: aqua;
+  text-align: center;
+  cursor: pointer;
+}
+
+.use-position {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  margin: 20px;
+  height: 50px;
+  width: 50px;
+  line-height: 50px;
+  font-size: 25px;
+  background-color: green;
+  border-radius: 5px;
+  border: solid white 2px;
+  text-align: center;
+  cursor: pointer;
+}
+
+
+.center-view {
+  position: fixed;
+  bottom: 70px;
+  right: 0;
+  margin: 20px;
+  height: 40px;
+  width: 54px;
+  line-height: 50px;
+  font-size: 25px;
+  background-color: transparent;
+  border-radius: 5px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.use-position.need-click {
+  background-color: red;
+}
