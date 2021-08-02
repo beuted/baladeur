@@ -13,26 +13,11 @@
   font-size: calc(10px + 2vmin);
   color: white;
   padding: 1px 0 4px 0;
-}
-
-.zone-nok {
-  background-color: red;
-}
-.zone-nok:after {
-  content: 'Vous êtes à plus de 1 Km 🚓'
-}
-.zone-ok {
   background-color: green;
 }
-.zone-ok:after {
-  content: '😌'
-}
 
-.need-click {
-  background-color: red;
-}
-.need-click:after {
-  content: 'click the 🏠 to set your home location'
+.app-header:after {
+  content: 'Where do you want to go ?'
 }
 
 .map {
@@ -81,6 +66,3 @@
   cursor: pointer;
 }
 
-.use-position.need-click {
-  background-color: red;
-}
