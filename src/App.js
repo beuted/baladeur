@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './App.css';
 import Map from 'ol/Map';
 import { fromCircle } from 'ol/geom/Polygon';
@@ -19,10 +19,10 @@ import { getVectorContext } from 'ol/render';
 import Point from 'ol/geom/Point';
 import Circle from 'ol/geom/Circle';
 import { getDistance } from 'ol/sphere';
-
 import Feature from 'ol/Feature';
 import * as turf from '@turf/turf'
 import { getBottomLeft } from 'ol/extent';
+import ArrowOverlay from './ArrowOverlay';
 
 //TODO: fix les 1500 km
 //TODO: fair emarcher reactive app
@@ -31,17 +31,17 @@ function App() {
   const [zoneOk, setZoneOk] = useState(false);
   //const [showInstallPromotion, setShowInstallPromotion] = useState(false);
   const [position, setPosition] = useState(null);
+  const [arrowMode, setArrowMode] = useState(false);
+  const [orientation, setOrientation] = useState(0); // Degree
   const [destination, setDestination] = useState([0, 0]);
+  const [orientationToFollow, setOrientationToFollow] = useState(0); // Degree
   const [geolocation, setGeolocation] = useState(null);
   const [map, setMap] = useState(null);
 
-  function getDestination() {
-    console.log("getDestination", destination)
-    return destination;
-  }
+  const stateRef = useRef();
+  stateRef.current = destination;
 
   const init = async () => {
-
     const source = new OSM({ crossOrigin: null });
     const tileLayer = new Tile({
       source: source
@@ -62,7 +62,7 @@ function App() {
 
     map.on('click', function (evt) {
       setDestination(Array.from(evt.coordinate));
-      console.log('destination changed:', evt.coordinate, destination);
+      map.render();
     });
 
     var geolocation = new Geolocation({
@@ -72,21 +72,40 @@ function App() {
       },
       projection: 'EPSG:3857',
     });
-
-    tileLayer.on('postrender', ((d) => {
-      return (event) => {
-        drawPosition(event, geolocation);
-        drawDestination(event, d);
-      }
-    })(destination));
-
     setGeolocation(geolocation);
     setMap(map);
+
+    tileLayer.on('postrender', (event) => {
+      drawPosition(event, geolocation);
+      drawDestination(event, stateRef.current);
+    });
+
+    window.addEventListener("deviceorientation", (event) => {
+      let compassdir;
+      if (event.webkitCompassHeading) {
+        // Apple works only with this, alpha doesn't work
+        compassdir = event.webkitCompassHeading;
+      } else {
+        compassdir = event.alpha;
+      }
+      setOrientation(compassdir);
+
+    }, true);
   }
 
   useEffect(() => {
-    init();
-  }, []);
+    // If in map mode init the map again !
+    if (!arrowMode)
+      init();
+  }, [arrowMode]);
+
+  useEffect(() => {
+    if (position == null)
+      return;
+    var deg = Math.atan2(destination[1] - position[1], destination[0] - position[0]) * 180 / Math.PI;
+
+    setOrientationToFollow(deg);
+  }, [position, destination]);
 
   useEffect(() => {
     if (!geolocation || geolocation.getTracking())
@@ -167,8 +186,8 @@ function App() {
     });
   }*/
 
-  function changeCirclePositionWithCurrentPosition() {
-    console.log(geolocation.getPosition());
+  function changeMode() {
+    setArrowMode(!arrowMode);
   }
 
   function recenterView() {
@@ -177,11 +196,12 @@ function App() {
 
   return (
     <div className="app">
-      <div id="map" className="map"></div>
-      <header className={'zone-ok app-header'}><div>{destination[0]},{destination[1]}:</div></header>
-      <div className={"use-position"} onClick={changeCirclePositionWithCurrentPosition}>🏠</div>
+      { arrowMode ? (<ArrowOverlay orientation={orientation} orientationToFollow={orientationToFollow}></ArrowOverlay>) : (<div id="map" className="map"></div>)}
+      <header className={'zone-ok app-header'}></header>
+      <div className={"use-position"} onClick={changeMode}>
+        {arrowMode ? (<div>↗</div>) : (<div>🗺</div>)}
+      </div>
       <div className={`center-view`} onClick={recenterView}>🎯</div>
-
     </div>
   );
 }
@@ -250,7 +270,6 @@ function drawPosition(event, geolocation) {
   let position = geolocation.getPosition();
   if (!position)
     return;
-  console.log('draw position', position);
 
   var vectorContext = getVectorContext(event);
   var currentPoint = new Point(position);
@@ -259,8 +278,6 @@ function drawPosition(event, geolocation) {
 };
 
 function drawDestination(event, destination) {
-  console.log('draw destination', destination);
-
   if (!destination)
     return;
 
