@@ -28,8 +28,6 @@ import ArrowOverlay from './ArrowOverlay';
 //TODO: fair emarcher reactive app
 
 function App() {
-  const [zoneOk, setZoneOk] = useState(false);
-  //const [showInstallPromotion, setShowInstallPromotion] = useState(false);
   const [position, setPosition] = useState(null);
   const [arrowMode, setArrowMode] = useState(false);
   const [orientation, setOrientation] = useState(0); // Degree
@@ -155,36 +153,6 @@ function App() {
     map.render();
   }, [position, circleCenter])
   */
-
-
-  ///////////////////////
-  //PWA stuff to be moved
-
-  //setShowInstallPromotion(true);
-  /*let deferredPrompt;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent the mini-infobar from appearing on mobile
-    e.preventDefault();
-    // Stash the event so it can be triggered later.
-    deferredPrompt = e;
-    // Update UI notify the user they can install the PWA
-    setShowInstallPromotion(true);
-  });
-
-  function installPwa() {
-    // Hide the app provided install promotion
-    setShowInstallPromotion(false);
-    // Show the install prompt
-    deferredPrompt.prompt();
-    // Wait for the user to respond to the prompt
-    deferredPrompt.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-    });
-  }*/
 
   function changeMode() {
     setArrowMode(!arrowMode);
