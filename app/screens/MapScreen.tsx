@@ -34,16 +34,27 @@ export default function MapScreen() {
       return;
     //TODO: take into account the radius of the earth
     const dLon = destination.longitude - position.longitude;
+    const dLat = destination.latitude - position.latitude;
     const lat2 = destination.latitude;
     const lat1 = position.latitude
-    var y = Math.sin(dLon) * Math.cos(lat2);
-    var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-    var deg = Math.atan2(y, x) * 180 / Math.PI;
-    deg = (deg + 360) % 360;
+    //var y = Math.sin(dLon) * Math.cos(lat2);
+    //var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+
+    //let y = position.longitude * destination.latitude - position.latitude * destination.longitude
+    //let x = position.longitude * destination.longitude + position.latitude * destination.latitude;
+    //var deg = Math.atan2(y, x) * 180 / Math.PI;
+
+    let deg = Math.asin(dLat / (Math.sqrt(dLat * dLat + dLon * dLon)));
+    var res = dLon >= 0 ? deg : (Math.PI) - deg;
+    res = res * 180 / Math.PI;
+    console.log(dLon, dLat, res);
+
+    res = (res + 360) % 360;
 
     //var deg = Math.atan2(destination.longitude - position.longitude, destination.latitude - position.latitude) * 180 / Math.PI;
 
-    positionDispatch({ type: 'SET_ORIENTATION_TO_FOLLOW', payload: deg });
+    positionDispatch({ type: 'SET_ORIENTATION_TO_FOLLOW', payload: res });
   }, [position, destination]);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Magnetometer, ThreeAxisMeasurement } from 'expo-sensors';
+import { Accelerometer, Magnetometer, ThreeAxisMeasurement } from 'expo-sensors';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { StyleSheet, Image } from 'react-native';
@@ -7,13 +7,23 @@ import { useSelector } from 'react-redux';
 
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
+import { LPF } from '../services/lpf-modulus';
 import { AppState } from '../store/rootReducer';
+
+// LPF
+const lpf = new LPF(0.5);
 
 export default function DirectionScreen() {
 
-  const [magnetometer, setMagnetometer] = useState(0);
+  const [angle, setAngle] = useState(0);
   const [directionToFollowPlusNorth, setDirectionToFollowPlusNorth] = useState(0);
   const [distance, setDistance] = useState(0);
+  const [accelerometer, setAccelerometer] = useState<ThreeAxisMeasurement | null>(null);
+  const [magnetometer, setMagnetometer] = useState<ThreeAxisMeasurement | null>(null);
+
+  const [x, setX] = useState(0);
+  const [y, setY] = useState(0);
+  const [z, setZ] = useState(0);
 
   // Store
   const { orientationToFollow } = useSelector((state: AppState) => state.position);
@@ -24,23 +34,39 @@ export default function DirectionScreen() {
   useEffect(() => {
     //TODO unsubscribe https://github.com/rahulhaque/compass-react-native-expo/blob/master/App.js
     Magnetometer.addListener((data) => {
-      setMagnetometer(getAngle(data));
+      //setAngle(getAngle(data));
+      setX(Math.floor(data.x));
+      setY(Math.floor(data.y));
+      setZ(Math.floor(data.z));
+      setMagnetometer(data);
+    })
+    Accelerometer.addListener(accelerometerData => {
+      setAccelerometer(accelerometerData);
     })
   }, [])
 
   useEffect(() => {
-    setDirectionToFollowPlusNorth(orientationToFollow - magnetometer + 90)
-  }, [magnetometer, orientationToFollow])
+    //TODO unsubscribe https://github.com/rahulhaque/compass-react-native-expo/blob/master/App.js
+    var angle = onSensorChanged(accelerometer, magnetometer);
+    setAngle(angle);
+  }, [accelerometer, magnetometer])
 
   useEffect(() => {
-    setDistance(Math.floor(measure(position, destination)));
+    let directionToFollowPlusNorth = Math.round(- orientationToFollow - angle + 90);
+    let newDirLpfAndModulus = lpf.nextModulus((directionToFollowPlusNorth + 360) % 360, 360);
+    setDirectionToFollowPlusNorth(newDirLpfAndModulus);
+  }, [angle, orientationToFollow])
+
+  useEffect(() => {
+    setDistance(measure(position, destination));
   }, [position, destination])
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{getDirection((orientationToFollow + 360) % 360)}</Text>
+      <Text style={styles.title}>{(orientationToFollow + 360) % 360}</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       <Text>{distance} m</Text>
+      <Text>angle {angle} : (x: {x}, y: {y}, z: {z})</Text>
       <Ionicons size={30} style={{ marginBottom: -3, transform: [{ rotate: directionToFollowPlusNorth + 'deg' }] }} name="arrow-up" />
     </View>
   );
@@ -70,19 +96,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const getAngle = (magnetometer: ThreeAxisMeasurement) => {
-  let { x, y, z } = magnetometer;
-
-  var angle: number;
-  if (Math.atan2(y, x) >= 0) {
-    angle = Math.atan2(y, x) * (180 / Math.PI);
-  } else {
-    angle = (Math.atan2(y, x) + 2 * Math.PI) * (180 / Math.PI);
-  }
-
-  return Math.round(angle);
-};
-
 const getDirection = (degree: number) => {
   if (degree >= 22.5 && degree < 67.5) {
     return 'NE';
@@ -109,6 +122,58 @@ const getDirection = (degree: number) => {
     return 'N';
   }
 };
+
+// Old method to get the angle without looking at the accelerometer
+const getAngle = (magnetometer: ThreeAxisMeasurement) => {
+  let { x, y, z } = magnetometer;
+
+  var angle: number;
+  if (Math.atan2(y, x) >= 0) {
+    angle = Math.atan2(y, x) * (180 / Math.PI);
+  } else {
+    angle = (Math.atan2(y, x) + 2 * Math.PI) * (180 / Math.PI);
+  }
+
+  return lpf.next(angle);
+};
+
+function onSensorChanged(accelerometer: ThreeAxisMeasurement | null, magnetometer: ThreeAxisMeasurement | null) {
+  // Source of this black magic: https://stackoverflow.com/questions/32372847/android-algorithms-for-sensormanager-getrotationmatrix-and-sensormanager-getori
+  if (!accelerometer || !magnetometer)
+    return 0;
+
+
+  let Hx = magnetometer.y * accelerometer.z - magnetometer.z * accelerometer.y;
+  let Hy = magnetometer.z * accelerometer.x - magnetometer.x * accelerometer.z;
+  let Hz = magnetometer.x * accelerometer.y - magnetometer.y * accelerometer.x;
+  let normH = Math.sqrt(Hx * Hx + Hy * Hy + Hz * Hz);
+
+  let invH = 1.0 / normH;
+  Hx *= invH;
+  Hy *= invH;
+  Hz *= invH;
+  let invA = 1.0 / Math.sqrt(accelerometer.x * accelerometer.x + accelerometer.y * accelerometer.y + accelerometer.z * accelerometer.z);
+  let Ax = accelerometer.x *= invA;
+  let Ay = accelerometer.y *= invA;
+  let Az = accelerometer.z *= invA;
+
+
+  /*
+  R[0] = Hx;     R[1] = Hy;     R[2] = Hz;
+  R[3] = Mx;     R[4] = My;     R[5] = Mz;
+  R[6] = Ax;     R[7] = Ay;     R[8] = Az;
+  */
+
+  let Mx = Ay * Hz - Az * Hy;
+  let My = Az * Hx - Ax * Hz;
+  let Mz = Ax * Hy - Ay * Hx;
+
+  let azimuth = Math.atan2(Hy, My);
+  let pitch = Math.asin(-Ay);
+  let roll = Math.atan2(-Ax, Az);
+
+  return (azimuth * (180 / Math.PI) + 360) % 360 as number;
+}
 
 function measure(position: { latitude: number, longitude: number }, destination: { latitude: number, longitude: number }) {  // generally used geo measurement function
   var R = 6378.137; // Radius of earth in KM
