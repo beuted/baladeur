@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Dimensions, StyleSheet } from 'react-native';
 import MapView, { LatLng, Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { LocationObject } from 'expo-location';
+import { Accuracy, LocationObject } from 'expo-location';
 import { Magnetometer, ThreeAxisMeasurement } from 'expo-sensors';
 
 import EditScreenInfo from '../components/EditScreenInfo';
@@ -48,7 +48,6 @@ export default function MapScreen() {
     let deg = Math.asin(dLat / (Math.sqrt(dLat * dLat + dLon * dLon)));
     var res = dLon >= 0 ? deg : (Math.PI) - deg;
     res = res * 180 / Math.PI;
-    console.log(dLon, dLat, res);
 
     res = (res + 360) % 360;
 
@@ -59,6 +58,7 @@ export default function MapScreen() {
 
   useEffect(() => {
     (async () => {
+      console.log("Init MapScreen stuff");
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
@@ -68,18 +68,21 @@ export default function MapScreen() {
       let location = await Location.getCurrentPositionAsync({});
       positionDispatch({ type: 'SET_POSITION', payload: location.coords });
       setRegion({ ...region, latitude: location.coords.latitude, longitude: location.coords.longitude })
+
+      Location.watchPositionAsync({ accuracy: Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 1 }, location => {
+        positionDispatch({ type: 'SET_POSITION', payload: location.coords });
+      });
     })();
   }, []);
 
   return (
     <View style={styles.container}>
-      <MapView style={styles.mapStyle} region={region} onPress={(e) => positionDispatch({ type: 'SET_DESTINATION', payload: e.nativeEvent.coordinate })} >
+      <MapView style={styles.mapStyle} initialRegion={region} onPress={(e) => positionDispatch({ type: 'SET_DESTINATION', payload: e.nativeEvent.coordinate })} >
         {!position ? null :
           <Marker
             key={1}
             coordinate={position}
             title="Position"
-            description="Your position"
           />
         }
         {!destination ? null :
@@ -87,7 +90,6 @@ export default function MapScreen() {
             key={2}
             coordinate={destination}
             title="Destination"
-            description="Your destination"
           />
         }
       </MapView>

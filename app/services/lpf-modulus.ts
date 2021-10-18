@@ -43,17 +43,30 @@ export class LPF {
     return result;
   }
 
+  public shiftBuffer(modulusShift: number) {
+    // Shift all buffer except the last value
+    for (let i = 0; i <= Math.max(this.buffer.length - 2, 0); i++) {
+      this.buffer[i] = this.buffer[i] + modulusShift;
+    }
+  }
+
 
   public nextModulus(nextValue: number, modulus: number): number {
     var self = this;
     // push new value to the end, and remove oldest one
-    var removed = this.__push(nextValue);
-    // smooth value using all values from buffer
-    var result = this.buffer.reduce(function (last, current) {
-      last = last || 0;
+    let lastValue = this.buffer[this.buffer.length - 1];
+    let removed = this.__push(nextValue);
 
-      if (Math.abs(current - last) >= 0.9 * modulus)
-        return current;
+    if (nextValue - lastValue >= 0.9 * modulus) {
+      this.shiftBuffer(modulus);
+    }
+    if (nextValue - lastValue < -0.9 * modulus) {
+      this.shiftBuffer(-modulus);
+    }
+
+    // smooth value using all values from buffer
+    var result = this.buffer.reduce((last, current) => {
+      last = last || 0;
 
       return self.smoothing * current + (1 - self.smoothing) * last;
     }, removed);

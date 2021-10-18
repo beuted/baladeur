@@ -1,15 +1,19 @@
+import { Place } from "../constants/Places";
+
 // State
 type PositionState = {
   position: { latitude: number, longitude: number };
   destination: { latitude: number, longitude: number };
   orientationToFollow: number;
+  parcours: Place[]
 }
 
 // Initial State
 const initialState: PositionState = {
   position: { latitude: 0, longitude: 0 },
   destination: { latitude: 0, longitude: 0 },
-  orientationToFollow: 0
+  orientationToFollow: 0,
+  parcours: []
 }
 
 // Reducer
@@ -29,6 +33,11 @@ export const PositionReducer = (state: PositionState = initialState, action: Pos
       return {
         ...state,
         orientationToFollow: action.payload,
+      }
+    case 'SET_PARCOURS':
+      return {
+        ...state,
+        parcours: action.payload,
       }
     default:
       return state;
@@ -51,7 +60,13 @@ export interface ISetDestinationAction {
   payload: { latitude: number, longitude: number };
 }
 
+export interface ISetParcoursAction {
+  readonly type: 'SET_PARCOURS';
+  payload: Place[];
+}
+
 export type PositionActions =
   | ISetPositonAction
   | ISetOrientationAction
   | ISetDestinationAction
+  | ISetParcoursAction

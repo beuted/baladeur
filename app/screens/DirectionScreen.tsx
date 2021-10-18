@@ -52,7 +52,7 @@ export default function DirectionScreen() {
   }, [accelerometer, magnetometer])
 
   useEffect(() => {
-    let directionToFollowPlusNorth = Math.round(- orientationToFollow - angle + 90);
+    let directionToFollowPlusNorth = Math.round(-orientationToFollow - angle + 90 - 45);
     let newDirLpfAndModulus = lpf.nextModulus((directionToFollowPlusNorth + 360) % 360, 360);
     setDirectionToFollowPlusNorth(newDirLpfAndModulus);
   }, [angle, orientationToFollow])
@@ -63,18 +63,15 @@ export default function DirectionScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{(orientationToFollow + 360) % 360}</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+      <Text style={styles.title}>{getDirection((-orientationToFollow + 90 + 360) % 360)}</Text>
       <Text>{distance} m</Text>
-      <Text>angle {angle} : (x: {x}, y: {y}, z: {z})</Text>
-      <Ionicons size={30} style={{ marginBottom: -3, transform: [{ rotate: directionToFollowPlusNorth + 'deg' }] }} name="arrow-up" />
+      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+
+      <Ionicons size={90} style={{ marginBottom: -3, transform: [{ rotate: directionToFollowPlusNorth + 'deg' }] }} name="paper-plane-outline" />
     </View>
   );
 }
-/*       <Image
-        style={styles.arrow}
-        source={require('@expo/images/adaptive-icon.png')}
-      /> */
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -184,5 +181,5 @@ function measure(position: { latitude: number, longitude: number }, destination:
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   var d = R * c;
-  return d * 1000; // meters
+  return Math.round(d * 1000); // meters
 }

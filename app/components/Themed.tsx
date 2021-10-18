@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { Text as DefaultText, View as DefaultView } from 'react-native';
+import { Button, Text as DefaultText, TouchableOpacity, View as DefaultView } from 'react-native';
 
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
@@ -30,6 +30,7 @@ type ThemeProps = {
 
 export type TextProps = ThemeProps & DefaultText['props'];
 export type ViewProps = ThemeProps & DefaultView['props'];
+export type ButtonProps = ThemeProps & Button['props'];
 
 export function Text(props: TextProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;
@@ -43,4 +44,14 @@ export function View(props: ViewProps) {
   const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
 
   return <DefaultView style={[{ backgroundColor }, style]} {...otherProps} />;
+}
+
+export function ThemedButton(props: ButtonProps) {
+  const { lightColor, darkColor, title, onPress, ...otherProps } = props;
+  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'tint');
+  const textColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
+
+  return (<TouchableOpacity style={{ backgroundColor: backgroundColor, padding: 10, borderRadius: 4 }} onPress={onPress} activeOpacity={0.8} >
+    <Text style={{ color: textColor, fontSize: 18 }}> {title}</Text>
+  </TouchableOpacity >)
 }

@@ -11,10 +11,15 @@ export type RootStackParamList = {
 export type BottomTabParamList = {
   Map: undefined;
   Direction: undefined;
+  Menu: undefined;
 };
 
 export type MapTabParamList = {
   MapScreen: undefined;
+};
+
+export type MenuTabParamList = {
+  MenuScreen: undefined;
 };
 
 export type DirectionTabParamList = {

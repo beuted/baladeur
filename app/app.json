@@ -1,11 +1,10 @@
 {
   "expo": {
-    "name": "dekajoo-test",
-    "slug": "dekajoo-test",
-    "version": "1.0.0",
+    "name": "Baladeur",
+    "slug": "baladeur",
+    "version": "0.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -25,11 +24,13 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.dekajoo.baladeur"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
-    "description": ""
+    "scheme": "baladeur",
+    "description": "Une application qui vous laisse vous perdre pour découvrir des endroits étonnants."
   }
 }
