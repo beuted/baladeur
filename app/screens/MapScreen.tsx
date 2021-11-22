@@ -11,20 +11,24 @@ import { Text, View } from '../components/Themed';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from '../store/rootReducer';
 import { PositionActions } from '../store/positionReducer';
+import { Coord } from '../constants/Maths';
+import places from '../constants/Places';
 
 export default function MapScreen() {
   const [region, setRegion] = useState<Region>({
-    latitude: 37.78825,
-    longitude: -122.4324,
+    latitude: 48.85610244323937,
+    longitude: 2.34,
     latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+    longitudeDelta: 0.16,
   });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [parcourPoints, setParcourPoints] = useState<Coord[]>([]);
 
   // Store
   const { destination } = useSelector((state: AppState) => state.position);
   const { position } = useSelector((state: AppState) => state.position);
   const { orientationToFollow } = useSelector((state: AppState) => state.position);
+  const { parcours } = useSelector((state: AppState) => state.position);
 
   // Actions
   const positionDispatch = useDispatch<React.Dispatch<PositionActions>>();
@@ -55,6 +59,10 @@ export default function MapScreen() {
 
     positionDispatch({ type: 'SET_ORIENTATION_TO_FOLLOW', payload: res });
   }, [position, destination]);
+
+  useEffect(() => {
+    setParcourPoints(parcours.map(x => x.position));
+  }, [parcours]);
 
   useEffect(() => {
     (async () => {
@@ -91,6 +99,16 @@ export default function MapScreen() {
             coordinate={destination}
             title="Destination"
           />
+        }
+        {
+          parcourPoints.map((coord, i) => {
+            return (<Marker
+              key={3 + i}
+              coordinate={coord}
+              title={"parcour" + i}
+              pinColor="#FF00FF"
+            />)
+          })
         }
       </MapView>
     </View >

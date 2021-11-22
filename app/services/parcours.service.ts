@@ -1,33 +1,25 @@
-import places, { Coord, Place, ComparePlaces, GetHash } from "../constants/Places";
+import { Coord, getVector, normalize, SQRT2BY2 } from "../constants/Maths";
+import places from "../constants/Places";
 
 export class ParcoursService {
   private static lengthClosestPlacesList = 10;
 
-  private static graph: { [placeIndex: number]: { placeIndex: number, closestPlacesIndex: number[] } } = []
+  private static graph: { [placeIndex: number]: { placeIndex: number, distanceToPlaces: { [id: number]: number } } } = []
 
   public static initGraph() {
     for (var i = 0; i < places.paris.length; i++) {
       var placePositon = places.paris[i].position;
-      var closestPlacesIndex: number[] = []
-      for (var closePlaceId = 0; closePlaceId < ParcoursService.lengthClosestPlacesList; closePlaceId++) {
-        let minDistance: number = +Infinity;
-        var closestsPlaceIndex = -1;
+      var distanceToPlaces: { [id: number]: number } = {}
+      for (var closePlaceId = 0; closePlaceId < places.paris.length; closePlaceId++) {
+        if (closePlaceId == i)
+          continue;
 
-        for (var j = 0; j < places.paris.length; j++) {
-          if (i == j || closestPlacesIndex.includes(j))
-            continue;
-          var distance = computeSquareDistance(placePositon, places.paris[j].position)
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestsPlaceIndex = j;
-          }
-        }
+        var distance = computeSquareDistance(placePositon, places.paris[closePlaceId].position)
 
-        closestPlacesIndex.push(closestsPlaceIndex);
+        distanceToPlaces[closePlaceId] = distance;
       }
 
-      ParcoursService.graph[i] = { placeIndex: i, closestPlacesIndex: closestPlacesIndex };
-      console.log({ placeIndex: i, closestPlacesIndex: closestPlacesIndex });
+      ParcoursService.graph[i] = { placeIndex: i, distanceToPlaces: distanceToPlaces };
     }
   }
 
@@ -53,11 +45,10 @@ export class ParcoursService {
       // endingPoint = startingPoint; //TODO will not work ATM
       return null;
     }
-    console.log('yup');
-
 
     let clostestStartPlaceIndex = ParcoursService.findClosestPlace(startingPoint);
     let clostestEndPlaceIndex = ParcoursService.findClosestPlace(endingPoint);
+    console.log('yup', places.paris[clostestStartPlaceIndex].position, places.paris[clostestEndPlaceIndex].position);
 
     // Mark all the vertices as not visited(By default set as false)
     let visited: { [k: number]: boolean } = {};
@@ -66,26 +57,51 @@ export class ParcoursService {
     queue.push(clostestStartPlaceIndex);
     visited[clostestStartPlaceIndex] = true;
 
-    console.log(queue);
+    while (true) {
+      let minDistance = +Infinity;
+      let nextPlaceIndex = null;
 
-    while (queue.length != 0) {
-      // Dequeue a vertex from queue and see if we reached the end
-      let placeIndex = queue.shift() as number;
+      for (var i = 0; i < places.paris.length; i++) {
+        const currentPlace = places.paris[i];
+        if (visited[i]) {
+          continue;
+        }
+        const lastPointIndex = queue[queue.length - 1];
 
-      if (placeIndex == clostestEndPlaceIndex)
-        return [...queue, placeIndex]; // We just need to add back the last element we just popped (I think)
+        // End condition when we reach the end place
+        if (lastPointIndex == clostestEndPlaceIndex) {
+          queue.push(clostestEndPlaceIndex);
+          return queue;
+        }
 
-      // If not queue one of the closest points
-      console.log("> " + ParcoursService.graph[placeIndex].closestPlacesIndex.length);
+        const A = places.paris[lastPointIndex].position;
+        const B = places.paris[clostestEndPlaceIndex].position;
+        const C = currentPlace.position;
+        const ABNormalized = normalize(getVector(A, B));
+        const ACNormalized = normalize(getVector(A, C));
 
-      for (let i = 0; i < ParcoursService.graph[placeIndex].closestPlacesIndex.length; i++) {
-        const closestPlaceIndex = ParcoursService.graph[placeIndex].closestPlacesIndex[i];
+        const h = crossProduct(ABNormalized, ACNormalized);
+        const angle = Math.acos(h);
 
-        if (!visited[closestPlaceIndex]) {
-          queue.push(closestPlaceIndex);
-          visited[closestPlaceIndex] = true;
+        const shootAngle = Math.PI / 8
+        if (angle < shootAngle && angle > -shootAngle) {
+          let distance = ParcoursService.graph[lastPointIndex].distanceToPlaces[i];
+          if (distance < minDistance) {
+            minDistance = distance;
+            nextPlaceIndex = i;
+          }
         }
       }
+
+      if (nextPlaceIndex == null) {
+        console.log("this should never happen");
+        return queue;
+      }
+
+      visited[nextPlaceIndex] = true;
+      queue.push(nextPlaceIndex);
+
+      console.log("Node " + places.paris[nextPlaceIndex].position.longitude + ", " + places.paris[nextPlaceIndex].position.latitude)
     }
 
     return null;
@@ -94,4 +110,8 @@ export class ParcoursService {
 
 function computeSquareDistance(placePositon: Coord, position: Coord): number {
   return Math.pow(placePositon.longitude - position.longitude, 2) + Math.pow(placePositon.latitude - position.latitude, 2);
+}
+
+function crossProduct(v0: Coord, v1: Coord) {
+  return ((v0.latitude * v1.latitude) + (v0.longitude * v1.longitude));
 }
