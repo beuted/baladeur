@@ -19,19 +19,10 @@ export default function MenuScreen() {
   // Store
   const { destination } = useSelector((state: AppState) => state.position);
   const { position } = useSelector((state: AppState) => state.position);
+  const { parcours } = useSelector((state: AppState) => state.position);
 
   // Actions
   const positionDispatch = useDispatch<React.Dispatch<PositionActions>>();
-
-  function setRandomDestination() {
-    const parisPlaces = places.paris;
-    const index = Math.floor(Math.random() * parisPlaces.length);
-    const randomPlace = parisPlaces[index];
-    alert("Next destination: " + randomPlace.name);
-
-    positionDispatch({ type: 'SET_DESTINATION', payload: randomPlace.position });
-    positionDispatch({ type: 'SET_PARCOURS', payload: [randomPlace] });
-  }
 
   function setRandomParcours() {
     let placeIndexes = ParcoursService.generateParcours(position, destination);
@@ -42,6 +33,25 @@ export default function MenuScreen() {
     let choosenPlaces = placeIndexes.map(x => places.paris[x])
     positionDispatch({ type: 'SET_PARCOURS', payload: choosenPlaces });
     alert("Parcours generated with " + choosenPlaces.length + " points of interest on your way.");
+  }
+
+  function setRandomDestination() {
+    const parisPlaces = places.paris;
+    const index = Math.floor(Math.random() * parisPlaces.length);
+    const randomPlace = parisPlaces[index];
+    alert("Next destination: " + randomPlace.name);
+
+    positionDispatch({ type: 'SET_DESTINATION', payload: randomPlace.position });
+  }
+
+  function popLastDestination() {
+    if (parcours.length == 0) {
+      return;
+    }
+
+    alert(`You reached: \n${parcours[0].name} \n${parcours[0].description} \n(${parcours[0].position.longitude}, ${parcours[0].position.latitude})`);
+
+    positionDispatch({ type: 'POP_LAST_POINT_PARCOURS', payload: null });
   }
 
   return (
@@ -55,6 +65,12 @@ export default function MenuScreen() {
       <ThemedButton
         onPress={setRandomParcours}
         title="Find me a parcours to my destination"
+        accessibilityLabel="Learn more about this purple button"
+      />
+      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+      <ThemedButton
+        onPress={popLastDestination}
+        title="Pop last destination"
         accessibilityLabel="Learn more about this purple button"
       />
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />

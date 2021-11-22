@@ -2,7 +2,7 @@ import { Coord, getVector, normalize, SQRT2BY2 } from "../constants/Maths";
 import places from "../constants/Places";
 
 export class ParcoursService {
-  private static lengthClosestPlacesList = 10;
+  private static maxShootAngle = Math.PI / 4
 
   private static graph: { [placeIndex: number]: { placeIndex: number, distanceToPlaces: { [id: number]: number } } } = []
 
@@ -23,14 +23,20 @@ export class ParcoursService {
     }
   }
 
-  public static findClosestPlace(coord: Coord) {
+  public static findClosestPlaceInTheRightDirection(startPoint: Coord, endPoint: Coord) {
     let minDistance: number = +Infinity;
     let closestIndex = 0;
-    for (var j = 0; j < places.paris.length; j++) {
-      var distance = computeSquareDistance(coord, places.paris[j].position)
-      if (distance < minDistance) {
-        closestIndex = j
-        minDistance = distance;
+    for (var i = 0; i < places.paris.length; i++) {
+      const possibleStopPoint = places.paris[i].position;
+
+      const angle = getAngleBetween3Points(startPoint, endPoint, possibleStopPoint);
+
+      if (angle < ParcoursService.maxShootAngle && angle > -ParcoursService.maxShootAngle) {
+        let distance = computeSquareDistance(startPoint, possibleStopPoint);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestIndex = i;
+        }
       }
     }
     return closestIndex;
@@ -46,8 +52,8 @@ export class ParcoursService {
       return null;
     }
 
-    let clostestStartPlaceIndex = ParcoursService.findClosestPlace(startingPoint);
-    let clostestEndPlaceIndex = ParcoursService.findClosestPlace(endingPoint);
+    let clostestStartPlaceIndex = ParcoursService.findClosestPlaceInTheRightDirection(startingPoint, endingPoint);
+    let clostestEndPlaceIndex = ParcoursService.findClosestPlaceInTheRightDirection(endingPoint, startingPoint);
     console.log('yup', places.paris[clostestStartPlaceIndex].position, places.paris[clostestEndPlaceIndex].position);
 
     // Mark all the vertices as not visited(By default set as false)
@@ -74,17 +80,13 @@ export class ParcoursService {
           return queue;
         }
 
-        const A = places.paris[lastPointIndex].position;
-        const B = places.paris[clostestEndPlaceIndex].position;
-        const C = currentPlace.position;
-        const ABNormalized = normalize(getVector(A, B));
-        const ACNormalized = normalize(getVector(A, C));
+        const startPoint = places.paris[lastPointIndex].position;
+        const endPoint = places.paris[clostestEndPlaceIndex].position;
+        const possibleStopPoint = currentPlace.position;
 
-        const h = crossProduct(ABNormalized, ACNormalized);
-        const angle = Math.acos(h);
+        const angle = getAngleBetween3Points(startPoint, endPoint, possibleStopPoint);
 
-        const shootAngle = Math.PI / 8
-        if (angle < shootAngle && angle > -shootAngle) {
+        if (angle < ParcoursService.maxShootAngle && angle > -ParcoursService.maxShootAngle) {
           let distance = ParcoursService.graph[lastPointIndex].distanceToPlaces[i];
           if (distance < minDistance) {
             minDistance = distance;
@@ -114,4 +116,12 @@ function computeSquareDistance(placePositon: Coord, position: Coord): number {
 
 function crossProduct(v0: Coord, v1: Coord) {
   return ((v0.latitude * v1.latitude) + (v0.longitude * v1.longitude));
+}
+
+function getAngleBetween3Points(A: Coord, B: Coord, C: Coord) {
+  const ABNormalized = normalize(getVector(A, B));
+  const ACNormalized = normalize(getVector(A, C));
+
+  const h = crossProduct(ABNormalized, ACNormalized);
+  return Math.acos(h);
 }

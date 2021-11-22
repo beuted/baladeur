@@ -39,6 +39,11 @@ export const PositionReducer = (state: PositionState = initialState, action: Pos
         ...state,
         parcours: action.payload,
       }
+    case 'POP_LAST_POINT_PARCOURS':
+      return {
+        ...state,
+        parcours: state.parcours.slice(1),
+      }
     default:
       return state;
   }
@@ -65,8 +70,14 @@ export interface ISetParcoursAction {
   payload: Place[];
 }
 
+export interface IPopLastPointParcoursAction {
+  readonly type: 'POP_LAST_POINT_PARCOURS';
+  payload: any;
+}
+
 export type PositionActions =
   | ISetPositonAction
   | ISetOrientationAction
   | ISetDestinationAction
   | ISetParcoursAction
+  | IPopLastPointParcoursAction

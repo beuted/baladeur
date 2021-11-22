@@ -45,7 +45,7 @@ for (let i = 0; i < 40; i++) {
         id: maxLength + i * 40 + j,
         name: "Random " + i + "-" + j,
         description: null,
-        position: { longitude: 2.2 + j * 0.006, latitude: 48.7 + i * 0.006 },
+        position: { longitude: 2.2 + j * 0.006, latitude: 48.7 + i * 0.006, },
         pictureUrls: []
       })
   }

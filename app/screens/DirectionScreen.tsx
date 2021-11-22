@@ -3,11 +3,12 @@ import { Accelerometer, Magnetometer, ThreeAxisMeasurement } from 'expo-sensors'
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { StyleSheet, Image } from 'react-native';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
 import { LPF } from '../services/lpf-modulus';
+import { PositionActions } from '../store/positionReducer';
 import { AppState } from '../store/rootReducer';
 
 // LPF
@@ -29,6 +30,10 @@ export default function DirectionScreen() {
   const { orientationToFollow } = useSelector((state: AppState) => state.position);
   const { position } = useSelector((state: AppState) => state.position);
   const { destination } = useSelector((state: AppState) => state.position);
+  const { parcours } = useSelector((state: AppState) => state.position);
+
+  // Actions
+  const positionDispatch = useDispatch<React.Dispatch<PositionActions>>();
 
 
   useEffect(() => {
@@ -60,6 +65,19 @@ export default function DirectionScreen() {
   useEffect(() => {
     setDistance(measure(position, destination));
   }, [position, destination])
+
+  useEffect(() => {
+    if (!parcours || parcours.length == 0 || !position) {
+      return;
+    }
+
+    var distance = measure(position, parcours[0].position);
+    if (distance < 10) { // Si on est à moins de 10m
+      alert(`You reached: \n${parcours[0].name} \n${parcours[0].description} \n(${parcours[0].position.longitude}, ${parcours[0].position.latitude})`);
+
+      positionDispatch({ type: 'POP_LAST_POINT_PARCOURS', payload: null });
+    }
+  }, [position, parcours])
 
   return (
     <View style={styles.container}>
