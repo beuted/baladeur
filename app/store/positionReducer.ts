@@ -5,7 +5,8 @@ type PositionState = {
   position: { latitude: number, longitude: number };
   destination: { latitude: number, longitude: number };
   orientationToFollow: number;
-  parcours: Place[]
+  parcours: Place[],
+  knownPlaces: number[] // List of place Ids
 }
 
 // Initial State
@@ -13,7 +14,8 @@ const initialState: PositionState = {
   position: { latitude: 0, longitude: 0 },
   destination: { latitude: 0, longitude: 0 },
   orientationToFollow: 0,
-  parcours: []
+  parcours: [],
+  knownPlaces: []
 }
 
 // Reducer
@@ -23,16 +25,11 @@ export const PositionReducer = (state: PositionState = initialState, action: Pos
       return {
         ...state,
         position: action.payload,
-      };
+      }
     case 'SET_DESTINATION':
       return {
         ...state,
         destination: Object.assign({}, action.payload),
-      };
-    case 'SET_ORIENTATION_TO_FOLLOW':
-      return {
-        ...state,
-        orientationToFollow: action.payload,
       }
     case 'SET_PARCOURS':
       return {
@@ -43,6 +40,11 @@ export const PositionReducer = (state: PositionState = initialState, action: Pos
       return {
         ...state,
         parcours: state.parcours.slice(1),
+      }
+    case 'SET_KNOWN_PLACE':
+      return {
+        ...state,
+        knownPlaces: [...state.knownPlaces, action.payload],
       }
     default:
       return state;
@@ -55,10 +57,6 @@ export interface ISetPositonAction {
   payload: { latitude: number, longitude: number };
 }
 
-export interface ISetOrientationAction {
-  readonly type: 'SET_ORIENTATION_TO_FOLLOW';
-  payload: number;
-}
 
 export interface ISetDestinationAction {
   readonly type: 'SET_DESTINATION';
@@ -75,9 +73,14 @@ export interface IPopLastPointParcoursAction {
   payload: any;
 }
 
+export interface ISetKnowPlaceAction {
+  readonly type: 'SET_KNOWN_PLACE';
+  payload: number;
+}
+
 export type PositionActions =
   | ISetPositonAction
-  | ISetOrientationAction
   | ISetDestinationAction
   | ISetParcoursAction
   | IPopLastPointParcoursAction
+  | ISetKnowPlaceAction

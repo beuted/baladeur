@@ -7,10 +7,10 @@ export class ParcoursService {
   private static graph: { [placeIndex: number]: { placeIndex: number, distanceToPlaces: { [id: number]: number } } } = []
 
   public static initGraph() {
-    for (var i = 0; i < places.paris.length; i++) {
+    for (var i = 0; i < Object.keys(places.paris).length; i++) {
       var placePositon = places.paris[i].position;
       var distanceToPlaces: { [id: number]: number } = {}
-      for (var closePlaceId = 0; closePlaceId < places.paris.length; closePlaceId++) {
+      for (var closePlaceId = 0; closePlaceId < Object.keys(places.paris).length; closePlaceId++) {
         if (closePlaceId == i)
           continue;
 
@@ -26,7 +26,7 @@ export class ParcoursService {
   public static findClosestPlaceInTheRightDirection(startPoint: Coord, endPoint: Coord) {
     let minDistance: number = +Infinity;
     let closestIndex = 0;
-    for (var i = 0; i < places.paris.length; i++) {
+    for (var i = 0; i < Object.keys(places.paris).length; i++) {
       const possibleStopPoint = places.paris[i].position;
 
       const angle = getAngleBetween3Points(startPoint, endPoint, possibleStopPoint);
@@ -54,7 +54,6 @@ export class ParcoursService {
 
     let clostestStartPlaceIndex = ParcoursService.findClosestPlaceInTheRightDirection(startingPoint, endingPoint);
     let clostestEndPlaceIndex = ParcoursService.findClosestPlaceInTheRightDirection(endingPoint, startingPoint);
-    console.log('yup', places.paris[clostestStartPlaceIndex].position, places.paris[clostestEndPlaceIndex].position);
 
     // Mark all the vertices as not visited(By default set as false)
     let visited: { [k: number]: boolean } = {};
@@ -67,7 +66,7 @@ export class ParcoursService {
       let minDistance = +Infinity;
       let nextPlaceIndex = null;
 
-      for (var i = 0; i < places.paris.length; i++) {
+      for (var i = 0; i < Object.keys(places.paris).length; i++) {
         const currentPlace = places.paris[i];
         if (visited[i]) {
           continue;
@@ -102,8 +101,6 @@ export class ParcoursService {
 
       visited[nextPlaceIndex] = true;
       queue.push(nextPlaceIndex);
-
-      console.log("Node " + places.paris[nextPlaceIndex].position.longitude + ", " + places.paris[nextPlaceIndex].position.latitude)
     }
 
     return null;

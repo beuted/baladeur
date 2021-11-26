@@ -13,8 +13,10 @@ import { AppState } from '../store/rootReducer';
 import { PositionActions } from '../store/positionReducer';
 import places from '../constants/Places';
 import { ParcoursService } from '../services/parcours.service';
+import { Ionicons } from '@expo/vector-icons';
+import { Coord } from '../constants/Maths';
 
-export default function MenuScreen() {
+export default function MenuScreen({ navigation }: { navigation: any /* TODO: find type */ }) {
 
   // Store
   const { destination } = useSelector((state: AppState) => state.position);
@@ -25,57 +27,58 @@ export default function MenuScreen() {
   const positionDispatch = useDispatch<React.Dispatch<PositionActions>>();
 
   function setRandomParcours() {
-    let placeIndexes = ParcoursService.generateParcours(position, destination);
+    navigation.navigate('Map');
+  }
+
+  function generateParcours(dest?: Coord) {
+    let placeIndexes = ParcoursService.generateParcours(position, dest || destination);
     if (!placeIndexes || placeIndexes.length == 0) {
       alert("Unable to generate a parcours for you, try another destination.");
       return;
     }
     let choosenPlaces = placeIndexes.map(x => places.paris[x])
     positionDispatch({ type: 'SET_PARCOURS', payload: choosenPlaces });
-    alert("Parcours generated with " + choosenPlaces.length + " points of interest on your way.");
+    //alert("Parcours generated with " + choosenPlaces.length + " points of interest on your way.");
   }
 
   function setRandomDestination() {
     const parisPlaces = places.paris;
-    const index = Math.floor(Math.random() * parisPlaces.length);
+    const index = Math.floor(Math.random() * Object.keys(parisPlaces).length);
     const randomPlace = parisPlaces[index];
-    alert("Next destination: " + randomPlace.name);
-
     positionDispatch({ type: 'SET_DESTINATION', payload: randomPlace.position });
-  }
 
-  function popLastDestination() {
-    if (parcours.length == 0) {
-      return;
-    }
-
-    alert(`You reached: \n${parcours[0].name} \n${parcours[0].description} \n(${parcours[0].position.longitude}, ${parcours[0].position.latitude})`);
-
-    positionDispatch({ type: 'POP_LAST_POINT_PARCOURS', payload: null });
+    generateParcours(randomPlace.position);
+    navigation.navigate('Direction');
   }
 
   return (
     <View style={styles.container}>
-      <ThemedButton
-        onPress={setRandomDestination}
-        title="Find interesting spot in my area"
-        accessibilityLabel="Learn more about this purple button"
-      />
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <ThemedButton
-        onPress={setRandomParcours}
-        title="Find me a parcours to my destination"
-        accessibilityLabel="Learn more about this purple button"
-      />
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <ThemedButton
-        onPress={popLastDestination}
-        title="Pop last destination"
-        accessibilityLabel="Learn more about this purple button"
-      />
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-
-    </View >
+      <View style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <Ionicons size={150} style={{}} name="paper-plane-outline" />
+      </View>
+      <View style={{
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+      }}>
+        <ThemedButton
+          onPress={setRandomParcours}
+          title="Where are we going ?"
+          accessibilityLabel="Learn more about this purple button"
+          style={{ marginBottom: 30, width: 250 }}
+          color="primary"
+        />
+        <ThemedButton
+          onPress={setRandomDestination}
+          title="Just wander"
+          accessibilityLabel="Learn more about this purple button"
+          style={{ marginBottom: 20, width: 250 }}
+        />
+      </View >
+    </View>
   );
 }
 

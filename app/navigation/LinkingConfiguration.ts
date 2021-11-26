@@ -12,16 +12,21 @@ export default {
     screens: {
       Root: {
         screens: {
-          TabOne: {
+          Menu: {
             screens: {
-              MapScreen: 'one',
+              MenuScreen: 'menu',
+            },
+          },
+          Map: {
+            screens: {
+              MapScreen: 'map',
             },
           },
           Direction: {
             screens: {
-              DirectionScreen: 'two',
+              DirectionScreen: 'direction',
             },
-          },
+          }
         },
       },
       NotFound: '*',

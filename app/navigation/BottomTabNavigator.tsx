@@ -22,7 +22,7 @@ export default function BottomTabNavigator() {
 
   return (
     <BottomTab.Navigator
-      initialRouteName="Map"
+      initialRouteName="Menu"
       tabBarOptions={{ activeTintColor: Colors[colorScheme].tint }}>
       <BottomTab.Screen
         name="Menu"
@@ -62,11 +62,12 @@ const TabZeroStack = createStackNavigator<MenuTabParamList>();
 
 function TabZeroNavigator() {
   return (
-    <TabZeroStack.Navigator>
+    <TabZeroStack.Navigator
+      screenOptions={{ headerShown: false }}>
       <TabZeroStack.Screen
         name="MenuScreen"
         component={MenuScreen}
-        options={{ headerTitle: 'Menu Tab Title' }}
+        options={{ headerTitle: 'Menu' }}
       />
     </TabZeroStack.Navigator>
   );
@@ -76,11 +77,12 @@ const TabOneStack = createStackNavigator<MapTabParamList>();
 
 function TabOneNavigator() {
   return (
-    <TabOneStack.Navigator>
+    <TabOneStack.Navigator
+      screenOptions={{ headerShown: false }}>
       <TabOneStack.Screen
         name="MapScreen"
         component={MapScreen}
-        options={{ headerTitle: 'Map Tab Title' }}
+        options={{ headerTitle: 'Choose a destination' }}
       />
     </TabOneStack.Navigator>
   );
@@ -90,11 +92,12 @@ const TabTwoStack = createStackNavigator<DirectionTabParamList>();
 
 function TabTwoNavigator() {
   return (
-    <TabTwoStack.Navigator>
+    <TabTwoStack.Navigator
+      screenOptions={{ headerShown: false, }}>
       <TabTwoStack.Screen
         name="DirectionScreen"
         component={DirectionScreen}
-        options={{ headerTitle: 'Direction Tab Title' }}
+        options={{ headerTitle: 'Direction' }}
       />
     </TabTwoStack.Navigator>
   );

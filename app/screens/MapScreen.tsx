@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Dimensions, StyleSheet } from 'react-native';
-import MapView, { LatLng, Marker, Region } from 'react-native-maps';
+import MapView, { LatLng, MapEvent, Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Accuracy, LocationObject } from 'expo-location';
 import { Magnetometer, ThreeAxisMeasurement } from 'expo-sensors';
@@ -13,8 +13,9 @@ import { AppState } from '../store/rootReducer';
 import { PositionActions } from '../store/positionReducer';
 import { Coord } from '../constants/Maths';
 import places from '../constants/Places';
+import { ParcoursService } from '../services/parcours.service';
 
-export default function MapScreen() {
+export default function MapScreen({ navigation }: { navigation: any /* TODO: find type */ }) {
   const [region, setRegion] = useState<Region>({
     latitude: 48.85610244323937,
     longitude: 2.34,
@@ -22,47 +23,15 @@ export default function MapScreen() {
     longitudeDelta: 0.16,
   });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [parcourPoints, setParcourPoints] = useState<Coord[]>([]);
 
   // Store
   const { destination } = useSelector((state: AppState) => state.position);
   const { position } = useSelector((state: AppState) => state.position);
-  const { orientationToFollow } = useSelector((state: AppState) => state.position);
   const { parcours } = useSelector((state: AppState) => state.position);
+  const { knownPlaces } = useSelector((state: AppState) => state.position);
 
   // Actions
   const positionDispatch = useDispatch<React.Dispatch<PositionActions>>();
-
-  useEffect(() => {
-    if (position == null)
-      return;
-    //TODO: take into account the radius of the earth
-    const dLon = destination.longitude - position.longitude;
-    const dLat = destination.latitude - position.latitude;
-    const lat2 = destination.latitude;
-    const lat1 = position.latitude
-    //var y = Math.sin(dLon) * Math.cos(lat2);
-    //var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-
-
-    //let y = position.longitude * destination.latitude - position.latitude * destination.longitude
-    //let x = position.longitude * destination.longitude + position.latitude * destination.latitude;
-    //var deg = Math.atan2(y, x) * 180 / Math.PI;
-
-    let deg = Math.asin(dLat / (Math.sqrt(dLat * dLat + dLon * dLon)));
-    var res = dLon >= 0 ? deg : (Math.PI) - deg;
-    res = res * 180 / Math.PI;
-
-    res = (res + 360) % 360;
-
-    //var deg = Math.atan2(destination.longitude - position.longitude, destination.latitude - position.latitude) * 180 / Math.PI;
-
-    positionDispatch({ type: 'SET_ORIENTATION_TO_FOLLOW', payload: res });
-  }, [position, destination]);
-
-  useEffect(() => {
-    setParcourPoints(parcours.map(x => x.position));
-  }, [parcours]);
 
   useEffect(() => {
     (async () => {
@@ -83,9 +52,26 @@ export default function MapScreen() {
     })();
   }, []);
 
+  function generateParcours(dest?: Coord) {
+    let placeIndexes = ParcoursService.generateParcours(position, dest || destination);
+    if (!placeIndexes || placeIndexes.length == 0) {
+      alert("Unable to generate a parcours for you, try another destination.");
+      return;
+    }
+    let choosenPlaces = placeIndexes.map(x => places.paris[x])
+    positionDispatch({ type: 'SET_PARCOURS', payload: choosenPlaces });
+    //alert("Parcours generated with " + choosenPlaces.length + " points of interest on your way.");
+  }
+
+  function clickOnMap(e: MapEvent) {
+    positionDispatch({ type: 'SET_DESTINATION', payload: e.nativeEvent.coordinate });
+    generateParcours(e.nativeEvent.coordinate);
+    navigation.navigate('Direction');
+  }
+
   return (
     <View style={styles.container}>
-      <MapView style={styles.mapStyle} initialRegion={region} onPress={(e) => positionDispatch({ type: 'SET_DESTINATION', payload: e.nativeEvent.coordinate })} >
+      <MapView style={styles.mapStyle} initialRegion={region} onPress={(e) => clickOnMap(e)} >
         {!position ? null :
           <Marker
             key={1}
@@ -101,11 +87,11 @@ export default function MapScreen() {
           />
         }
         {
-          parcourPoints.map((coord, i) => {
+          knownPlaces.map((id, i) => {
             return (<Marker
               key={3 + i}
-              coordinate={coord}
-              title={"parcour" + i}
+              coordinate={places.paris[id].position}
+              title={places.paris[id].name}
               pinColor="#FF00FF"
             />)
           })

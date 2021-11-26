@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { Button, Text as DefaultText, TouchableOpacity, View as DefaultView } from 'react-native';
+import { Button, StyleProp, Text as DefaultText, TouchableOpacity, View as DefaultView, ViewStyle } from 'react-native';
 
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
@@ -30,7 +30,7 @@ type ThemeProps = {
 
 export type TextProps = ThemeProps & DefaultText['props'];
 export type ViewProps = ThemeProps & DefaultView['props'];
-export type ButtonProps = ThemeProps & Button['props'];
+export type ButtonProps = ThemeProps & Button['props'] & { style?: StyleProp<ViewStyle> };
 
 export function Text(props: TextProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;
@@ -47,11 +47,13 @@ export function View(props: ViewProps) {
 }
 
 export function ThemedButton(props: ButtonProps) {
-  const { lightColor, darkColor, title, onPress, ...otherProps } = props;
-  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'tint');
-  const textColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
+  const { lightColor, darkColor, title, onPress, style, color, ...otherProps } = props;
+  const tintColor = useThemeColor({ light: lightColor, dark: darkColor }, 'tint');
+  const bgColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');
 
-  return (<TouchableOpacity style={{ backgroundColor: backgroundColor, padding: 10, borderRadius: 4 }} onPress={onPress} activeOpacity={0.8} >
-    <Text style={{ color: textColor, fontSize: 18 }}> {title}</Text>
+  const backgroundColor = (color == "primary") ? tintColor : bgColor;
+  const textColor = (color == "primary") ? bgColor : tintColor;;
+  return (<TouchableOpacity style={[{ backgroundColor: backgroundColor, padding: 10, borderRadius: 20, elevation: 2, minWidth: 60, }, props.style]} onPress={onPress} activeOpacity={0.8} >
+    <Text style={{ color: textColor, fontSize: 18, textAlign: 'center' }}> {title}</Text>
   </TouchableOpacity >)
 }
